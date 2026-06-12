@@ -6,6 +6,7 @@ import { allTickers, resolveTicker } from './edgar.js';
 import { insiderTransactions } from './form4.js';
 import { institutionalHolders } from './thirteenF.js';
 import { dailyPrices } from './prices.js';
+import { companyProfile, optionsChain } from './yahoo.js';
 
 const app = express();
 const PORT = 3001;
@@ -55,6 +56,24 @@ app.get(
     const prices = await dailyPrices(company.ticker);
     if (!prices.length) throw fail(404, `No price history found for ${company.ticker} on Stooq`);
     return prices;
+  }),
+);
+
+app.get(
+  '/api/profile/:ticker',
+  wrap(async (req) => {
+    const company = await requireCompany(req);
+    // SEC name/cik always resolve; Yahoo summary/stats degrade gracefully.
+    return { ...company, ...(await companyProfile(company.ticker)) };
+  }),
+);
+
+app.get(
+  '/api/options/:ticker',
+  wrap(async (req) => {
+    const company = await requireCompany(req);
+    const date = /^\d+$/.test(String(req.query.date ?? '')) ? Number(req.query.date) : undefined;
+    return optionsChain(company.ticker, date);
   }),
 );
 

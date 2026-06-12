@@ -1,30 +1,28 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useApi } from './api.js';
+import { useRoute } from './useRoute.js';
 import { volumeAnomaly } from './analytics/volumeAnomaly.js';
 import { execPatterns } from './analytics/execPatterns.js';
 import { insiderFlow } from './analytics/insiderFlow.js';
 import { smartMoneyScore } from './analytics/smartMoneyScore.js';
 import TickerSearch from './components/TickerSearch.jsx';
 import ScoreCard from './components/ScoreCard.jsx';
+import ProfilePanel from './components/ProfilePanel.jsx';
 import PriceChart from './components/PriceChart.jsx';
 import InsiderPanel from './components/InsiderPanel.jsx';
 import AlgoPanel from './components/AlgoPanel.jsx';
 import InstitutionalPanel from './components/InstitutionalPanel.jsx';
+import OptionsPanel from './components/OptionsPanel.jsx';
 
-const SUGGESTIONS = [
-  { ticker: 'NVDA', name: 'NVIDIA CORP' },
-  { ticker: 'AAPL', name: 'Apple Inc.' },
-  { ticker: 'TSLA', name: 'Tesla, Inc.' },
-  { ticker: 'PLTR', name: 'Palantir Technologies Inc.' },
-  { ticker: 'JPM', name: 'JPMorgan Chase & Co.' },
-];
+const SUGGESTIONS = ['NVDA', 'AAPL', 'TSLA', 'PLTR', 'JPM'];
 
 export default function App() {
-  const [company, setCompany] = useState(null);
+  const [ticker, navigate] = useRoute();
 
-  const prices = useApi(company && `/api/prices/${company.ticker}`);
-  const insiders = useApi(company && `/api/insiders/${company.ticker}`);
-  const institutional = useApi(company && `/api/institutional/${company.ticker}`);
+  const profile = useApi(ticker && `/api/profile/${encodeURIComponent(ticker)}`);
+  const prices = useApi(ticker && `/api/prices/${encodeURIComponent(ticker)}`);
+  const insiders = useApi(ticker && `/api/insiders/${encodeURIComponent(ticker)}`);
+  const institutional = useApi(ticker && `/api/institutional/${encodeURIComponent(ticker)}`);
 
   const analytics = useMemo(() => {
     if (!prices.data?.length) return null;
@@ -35,21 +33,48 @@ export default function App() {
     return { volume, exec, flow, composite };
   }, [prices.data, insiders.data]);
 
+  useEffect(() => {
+    const name = profile.data?.name;
+    document.title = ticker
+      ? `${ticker}${name ? ` · ${name}` : ''} · Insider Edge`
+      : 'Insider Edge — smart money terminal';
+  }, [ticker, profile.data]);
+
+  const company = profile.data ?? { ticker, name: '' };
+  const notFound = profile.status === 404;
+
+  const chips = (
+    <div className="hero-chips">
+      {SUGGESTIONS.map((t) => (
+        <button key={t} className="chip chip-btn" onClick={() => navigate(t)}>
+          {t}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <div className="app">
       <div className="scanlines" aria-hidden="true" />
       <header className="masthead">
-        <div className="brand">
+        <a
+          className="brand"
+          href="/"
+          onClick={(e) => {
+            e.preventDefault();
+            navigate(null);
+          }}
+        >
           <span className="brand-mark">▚</span>
           <h1>
             Insider <em>Edge</em>
           </h1>
           <span className="brand-sub">smart money terminal</span>
-        </div>
-        <TickerSearch onSelect={setCompany} />
+        </a>
+        <TickerSearch onSelect={(c) => navigate(c.ticker)} />
       </header>
 
-      {!company ? (
+      {!ticker ? (
         <section className="hero">
           <p className="hero-kicker">SEC EDGAR · Form 4 · 13F-HR · daily tape</p>
           <h2 className="hero-title">
@@ -62,22 +87,26 @@ export default function App() {
             signatures read straight off the tape — fused into one composite view of where the
             smart money is leaning.
           </p>
-          <div className="hero-chips">
-            {SUGGESTIONS.map((s) => (
-              <button key={s.ticker} className="chip chip-btn" onClick={() => setCompany(s)}>
-                {s.ticker}
-              </button>
-            ))}
-          </div>
+          {chips}
+        </section>
+      ) : notFound ? (
+        <section className="hero">
+          <p className="hero-kicker">404 · unknown symbol</p>
+          <h2 className="hero-title">No tape for “{ticker}”.</h2>
+          <p className="hero-copy">
+            {profile.error ?? 'That ticker is not in SEC’s registry.'} Try one of these instead:
+          </p>
+          {chips}
         </section>
       ) : (
-        <main key={company.ticker} className="dashboard">
+        <main key={ticker} className="dashboard">
           <ScoreCard
             company={company}
             composite={analytics?.composite}
             loading={prices.loading || insiders.loading}
             error={prices.error}
           />
+          <ProfilePanel profile={profile.data} loading={profile.loading} error={profile.error} />
           <PriceChart
             prices={prices.data}
             loading={prices.loading}
@@ -104,13 +133,14 @@ export default function App() {
               error={institutional.error}
             />
           </div>
+          <OptionsPanel ticker={ticker} />
         </main>
       )}
 
       <footer className="colophon">
-        Data: SEC EDGAR (Form 4, 13F-HR) &amp; Yahoo Finance daily OHLCV. Algorithmic-behavior signals are
-        heuristics computed from the daily tape, not tick data. Research &amp; education only — not
-        investment advice.
+        Data: SEC EDGAR (Form 4, 13F-HR) &amp; Yahoo Finance (daily OHLCV, fundamentals, options).
+        Algorithmic-behavior signals are heuristics computed from the daily tape, not tick data.
+        Research &amp; education only — not investment advice.
       </footer>
     </div>
   );

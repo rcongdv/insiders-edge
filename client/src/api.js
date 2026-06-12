@@ -1,23 +1,31 @@
 import { useEffect, useState } from 'react';
 
 export function useApi(path) {
-  const [state, setState] = useState({ data: null, error: null, loading: !!path });
+  const [state, setState] = useState({ data: null, error: null, status: null, loading: !!path });
 
   useEffect(() => {
     if (!path) {
-      setState({ data: null, error: null, loading: false });
+      setState({ data: null, error: null, status: null, loading: false });
       return;
     }
     let alive = true;
-    setState({ data: null, error: null, loading: true });
+    setState({ data: null, error: null, status: null, loading: true });
     fetch(path)
       .then(async (r) => {
         const body = await r.json().catch(() => null);
-        if (!r.ok) throw new Error(body?.error ?? `Request failed (${r.status})`);
+        if (!r.ok) {
+          const err = new Error(body?.error ?? `Request failed (${r.status})`);
+          err.status = r.status;
+          throw err;
+        }
         return body;
       })
-      .then((data) => alive && setState({ data, error: null, loading: false }))
-      .catch((err) => alive && setState({ data: null, error: err.message, loading: false }));
+      .then((data) => alive && setState({ data, error: null, status: 200, loading: false }))
+      .catch(
+        (err) =>
+          alive &&
+          setState({ data: null, error: err.message, status: err.status ?? null, loading: false }),
+      );
     return () => {
       alive = false;
     };

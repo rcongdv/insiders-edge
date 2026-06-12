@@ -1,7 +1,9 @@
 # Insider Edge
 
 Stock analysis terminal focused on insider/institutional activity (SEC EDGAR Form 4 + 13F)
-with algorithmic-behavior heuristics computed from the daily tape.
+with algorithmic-behavior heuristics computed from the daily tape, plus company fundamentals
+and options-flow signals from Yahoo Finance. Views are URL-routed (`/NVDA`), so deep links,
+bookmarks, and browser back/forward all work.
 
 ## Develop
 
@@ -86,6 +88,9 @@ Both options avoid port forwarding and never expose your home IP.
 
 - Yahoo Finance occasionally rate-limits; from a residential IP this is rare
   (datacenter IPs have it much worse — one reason home hosting suits this app).
+- The fundamentals/options endpoints need Yahoo's cookie+crumb handshake
+  (`server/yahoo.js`). If Yahoo blocks it (429), the app degrades gracefully —
+  price + 52-week range still show — and retries after a cooldown.
 - EDGAR requires the User-Agent contact header set in `server/edgar.js` and
   ~10 req/s max; the built-in cache keeps usage far below that at small scale.
 - Research & education only — not investment advice.

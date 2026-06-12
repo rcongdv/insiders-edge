@@ -3,18 +3,20 @@ const USER_AGENT = 'insider-edge research tool richardcong635@gmail.com';
 
 const cache = new Map(); // url -> { expires, data }
 
-export async function cachedFetch(url, { ttl = 15 * 60_000, as = 'json' } = {}) {
+export async function cachedFetch(url, { ttl = 15 * 60_000, as = 'json', headers = {} } = {}) {
   const hit = cache.get(url);
   if (hit && hit.expires > Date.now()) return hit.data;
 
-  const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
+  const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT, ...headers } });
   if (!res.ok) {
     const host = new URL(url).host;
     const hint =
       res.status === 403 && host.endsWith('sec.gov')
         ? ' (EDGAR returns 403 when the User-Agent contact header is missing or rate limits are exceeded)'
         : '';
-    throw new Error(`Upstream ${res.status} from ${host}${hint}`);
+    const err = new Error(`Upstream ${res.status} from ${host}${hint}`);
+    err.upstreamStatus = res.status;
+    throw err;
   }
   const data = as === 'json' ? await res.json() : await res.text();
   cache.set(url, { expires: Date.now() + ttl, data });

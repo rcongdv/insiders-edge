@@ -3,10 +3,18 @@ import { cachedFetch } from './edgar.js';
 // Yahoo Finance v8 chart API: free daily OHLCV, no API key. (Stooq's CSV
 // export now sits behind a JavaScript proof-of-work wall, so it's unusable
 // server-side.)
+const chartUrl = (ticker) =>
+  `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker.toUpperCase())}?range=2y&interval=1d`;
+
+// Same URL (and therefore same cache entry) as dailyPrices — free once the
+// dashboard has loaded prices.
+export async function chartMeta(ticker) {
+  const body = await cachedFetch(chartUrl(ticker), { ttl: 60 * 60_000 });
+  return body?.chart?.result?.[0]?.meta ?? null;
+}
+
 export async function dailyPrices(ticker) {
-  const sym = encodeURIComponent(ticker.toUpperCase());
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=2y&interval=1d`;
-  const body = await cachedFetch(url, { ttl: 60 * 60_000 });
+  const body = await cachedFetch(chartUrl(ticker), { ttl: 60 * 60_000 });
 
   const result = body?.chart?.result?.[0];
   if (!result?.timestamp?.length) return [];
