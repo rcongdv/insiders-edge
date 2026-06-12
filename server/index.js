@@ -1,3 +1,4 @@
+import './env.js'; // must come first so .env values are set before other modules read them
 import express from 'express';
 import { existsSync } from 'node:fs';
 import path from 'node:path';

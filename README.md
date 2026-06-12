@@ -37,16 +37,26 @@ client and runs a standard OAuth flow (dynamic client registration + PKCE).
 - Position prices come from Robinhood quotes; symbols Robinhood won't quote fall
   back to Yahoo's chart API.
 
-The OAuth callback URL is derived automatically from wherever you click Sync —
-the public tunnel hostname, the Vite dev origin, or localhost — so remote hosting
-works without configuration.
+The OAuth callback URL comes from env files in the repo root, picked by
+`NODE_ENV`: `npm run dev` loads `.env.development` (localhost), `npm start` and
+the launchd service load `.env.production` (your public hostname). A plain
+`.env`, if present, overrides both. All env files are gitignored — copy
+`.env.example` to get started:
 
-Environment overrides:
+```sh
+cp .env.example .env.development   # localhost callback
+cp .env.example .env.production    # then set your public hostname
+```
+
+If `ROBINHOOD_REDIRECT_URI` isn't set at all, the callback URL falls back to
+being derived from the connect request's `Host`/`X-Forwarded-*` headers.
+
+Environment variables:
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `ROBINHOOD_MCP_URL` | `https://agent.robinhood.com/mcp/trading` | Point at a mock MCP server for testing |
-| `ROBINHOOD_REDIRECT_URI` | auto-derived from the connect request | Force a fixed OAuth callback URL for unusual proxy setups that don't forward `Host`/`X-Forwarded-*` headers |
+| `ROBINHOOD_REDIRECT_URI` | derived from the connect request | OAuth callback URL — localhost in `.env.development`, public hostname in `.env.production` |
 
 Debugging: with a live session, `GET /api/robinhood/raw?tool=get_accounts` (read-only
 `get_*`/`search` tools only, tool arguments as query params) returns the raw parsed
@@ -78,6 +88,10 @@ Create `~/Library/LaunchAgents/com.insideredge.plist` (adjust the two paths;
     <string>server/index.js</string>
   </array>
   <key>WorkingDirectory</key><string>/Users/YOU/insiders</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>NODE_ENV</key><string>production</string>
+  </dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
   <key>StandardOutPath</key><string>/tmp/insider-edge.log</string>
