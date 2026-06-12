@@ -356,13 +356,14 @@ export function mergePositions(rows) {
 export function finalizePositions(merged, quotes) {
   return merged
     .map((p) => {
-      const price = quotes.get(p.symbol) ?? null;
+      let price = quotes.get(p.symbol) ?? null;
       const marketValue = p.marketValue ?? (price != null ? price * p.quantity : null);
+      if (price == null && marketValue != null && p.quantity) price = marketValue / p.quantity;
       const costBasis = p.costKnown ? p.costBasis : null;
       const avgCost = costBasis != null ? costBasis / p.quantity : null;
       const pnl = marketValue != null && costBasis != null ? marketValue - costBasis : null;
       const pnlPct = pnl != null && costBasis ? pnl / costBasis : null;
-      return { symbol: p.symbol, quantity: p.quantity, avgCost, marketValue, pnl, pnlPct };
+      return { symbol: p.symbol, quantity: p.quantity, price, avgCost, marketValue, pnl, pnlPct };
     })
     .sort((a, b) => (b.marketValue ?? 0) - (a.marketValue ?? 0));
 }

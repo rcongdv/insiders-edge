@@ -1132,6 +1132,36 @@ a.brand:hover .brand-mark {
   flex-wrap: wrap;
 }
 
+.rh-sort {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 10px;
+  font: 500 11px var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--ink-dim);
+}
+
+.rh-sort-btn {
+  font: inherit;
+  color: var(--ink-dim);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline dotted;
+}
+
+.rh-sort-btn:hover {
+  color: var(--ink);
+}
+
+.rh-sort-btn.active {
+  color: var(--green);
+  text-decoration: none;
+}
+
 .rh-link {
   font: inherit;
   color: var(--cyan);

@@ -1,14 +1,36 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useApi, fmtMoney, fmtCompact, fmtPct } from '../api.js';
 
 const fmtPrice = (n) =>
   n == null ? '—' : '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const SORT_KEYS = [
+  { key: 'marketValue', label: 'value' },
+  { key: 'pnl', label: 'p/l' },
+  { key: 'pnlPct', label: 'p/l %' },
+  { key: 'price', label: 'price' },
+  { key: 'quantity', label: 'shares' },
+  { key: 'symbol', label: 'sym' },
+];
+
+function sortPositions(positions, { key, dir }) {
+  return [...positions].sort((a, b) => {
+    if (key === 'symbol') return dir * a.symbol.localeCompare(b.symbol);
+    const av = a[key];
+    const bv = b[key];
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1; // nulls last, regardless of direction
+    if (bv == null) return -1;
+    return dir * (av - bv);
+  });
+}
 
 export default function RobinhoodPanel({ navigate }) {
   const [nonce, setNonce] = useState(0);
   const [refreshCount, setRefreshCount] = useState(0);
   const [notice, setNotice] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [sort, setSort] = useState({ key: 'marketValue', dir: -1 });
 
   // Landing after the OAuth callback redirect (?rh=connected | ?rh=error&msg=…).
   useEffect(() => {
@@ -51,6 +73,12 @@ export default function RobinhoodPanel({ navigate }) {
 
   const positions = portfolio.data?.positions ?? [];
   const watchlists = portfolio.data?.watchlists ?? [];
+  const sorted = useMemo(() => sortPositions(positions, sort), [positions, sort]);
+
+  const setSortKey = (key) =>
+    setSort((s) =>
+      s.key === key ? { key, dir: -s.dir } : { key, dir: key === 'symbol' ? 1 : -1 },
+    );
 
   return (
     <section className="rh-panel panel" style={{ '--d': '180ms' }}>
@@ -91,23 +119,39 @@ export default function RobinhoodPanel({ navigate }) {
           {positions.length === 0 ? (
             <p className="empty-note">No open positions in your Robinhood accounts.</p>
           ) : (
-            <div className="rh-pos-grid">
-              {positions.map((p) => (
-                <button key={p.symbol} className="rh-pos-card" onClick={() => navigate(p.symbol)}>
-                  <span className="rh-pos-top">
-                    <span className="rh-pos-symbol">{p.symbol}</span>
-                    <span className="rh-pos-value">{fmtMoney(p.marketValue)}</span>
-                  </span>
-                  <span className="rh-pos-meta">
-                    {fmtCompact(p.quantity)} sh · avg {fmtPrice(p.avgCost)}
-                  </span>
-                  <span className={`rh-pnl ${p.pnl > 0 ? 'up' : p.pnl < 0 ? 'down' : ''}`}>
-                    {p.pnl == null ? '—' : `${p.pnl > 0 ? '+' : p.pnl < 0 ? '−' : ''}${fmtMoney(Math.abs(p.pnl))}`}
-                    {p.pnlPct != null && ` (${fmtPct(p.pnlPct)})`}
-                  </span>
-                </button>
-              ))}
-            </div>
+            <>
+              <div className="rh-sort">
+                <span>sort:</span>
+                {SORT_KEYS.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    className={`rh-sort-btn${sort.key === key ? ' active' : ''}`}
+                    onClick={() => setSortKey(key)}
+                  >
+                    {label}
+                    {sort.key === key && (sort.dir < 0 ? ' ▾' : ' ▴')}
+                  </button>
+                ))}
+              </div>
+              <div className="rh-pos-grid">
+                {sorted.map((p) => (
+                  <button key={p.symbol} className="rh-pos-card" onClick={() => navigate(p.symbol)}>
+                    <span className="rh-pos-top">
+                      <span className="rh-pos-symbol">{p.symbol}</span>
+                      <span className="rh-pos-value">{fmtMoney(p.marketValue)}</span>
+                    </span>
+                    <span className="rh-pos-meta">
+                      {fmtCompact(p.quantity)} sh
+                      {p.price != null && <> @ {fmtPrice(p.price)}</>} · avg {fmtPrice(p.avgCost)}
+                    </span>
+                    <span className={`rh-pnl ${p.pnl > 0 ? 'up' : p.pnl < 0 ? 'down' : ''}`}>
+                      {p.pnl == null ? '—' : `${p.pnl > 0 ? '+' : p.pnl < 0 ? '−' : ''}${fmtMoney(Math.abs(p.pnl))}`}
+                      {p.pnlPct != null && ` (${fmtPct(p.pnlPct)})`}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
           )}
 
           {watchlists.length > 0 &&
