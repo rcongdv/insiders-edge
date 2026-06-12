@@ -107,7 +107,20 @@ app.get(
 // Tokens and portfolio data are held in memory only (session-only by design).
 app.post(
   '/api/robinhood/connect',
-  wrap(async (req) => beginAuth(req.get('referer') ?? '/')),
+  wrap(async (req) => {
+    // Build the OAuth callback URL from the caller's origin so it works from
+    // wherever the user is browsing: a public tunnel (forwarded Host), the
+    // Vite dev origin (its proxy routes /api back here), or :3001 directly.
+    const host = req.get('x-forwarded-host')?.split(',')[0].trim() ?? req.get('host');
+    const proto =
+      req.get('x-forwarded-proto')?.split(',')[0].trim() ??
+      (/^(localhost|127\.)/.test(host ?? '') ? 'http' : 'https');
+    const origin = host ? `${proto}://${host}` : null;
+    return beginAuth(
+      req.get('referer') ?? (origin ? `${origin}/` : '/'),
+      origin ? `${origin}/api/robinhood/callback` : undefined,
+    );
+  }),
 );
 
 // OAuth callback must redirect the browser back to the SPA, so no `wrap`.

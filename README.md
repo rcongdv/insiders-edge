@@ -37,12 +37,16 @@ client and runs a standard OAuth flow (dynamic client registration + PKCE).
 - Position prices come from Robinhood quotes; symbols Robinhood won't quote fall
   back to Yahoo's chart API.
 
+The OAuth callback URL is derived automatically from wherever you click Sync —
+the public tunnel hostname, the Vite dev origin, or localhost — so remote hosting
+works without configuration.
+
 Environment overrides:
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `ROBINHOOD_MCP_URL` | `https://agent.robinhood.com/mcp/trading` | Point at a mock MCP server for testing |
-| `ROBINHOOD_REDIRECT_URI` | `http://localhost:3001/api/robinhood/callback` | OAuth callback. **Must be set to the public URL when hosting remotely** (e.g. `https://your-mini.your-tailnet.ts.net/api/robinhood/callback`) |
+| `ROBINHOOD_REDIRECT_URI` | auto-derived from the connect request | Force a fixed OAuth callback URL for unusual proxy setups that don't forward `Host`/`X-Forwarded-*` headers |
 
 Debugging: with a live session, `GET /api/robinhood/raw?tool=get_accounts` (read-only
 `get_*`/`search` tools only, tool arguments as query params) returns the raw parsed

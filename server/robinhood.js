@@ -6,10 +6,7 @@ import { chartMeta } from './prices.js';
 
 // Robinhood's official agentic-trading MCP server. Override for local mock testing.
 const MCP_URL = process.env.ROBINHOOD_MCP_URL ?? 'https://agent.robinhood.com/mcp/trading';
-// Must point at the API process (:3001) — Robinhood redirects the browser here directly,
-// bypassing the Vite dev proxy, and the same URI works in production.
-const REDIRECT_URI =
-  process.env.ROBINHOOD_REDIRECT_URI ?? 'http://localhost:3001/api/robinhood/callback';
+const FALLBACK_REDIRECT_URI = 'http://localhost:3001/api/robinhood/callback';
 
 const PORTFOLIO_TTL = 60_000;
 const QUOTE_CHUNK = 20; // get_equity_quotes accepts up to 20 symbols per call
@@ -29,6 +26,7 @@ const blankSession = () => ({
   provider: null,
   transport: null,
   client: null,
+  redirectUri: FALLBACK_REDIRECT_URI,
   tokens: null,
   clientInfo: null,
   codeVerifier: null,
@@ -46,13 +44,13 @@ const blankSession = () => ({
 // the authorization URL for the SPA to navigate to. Tokens live on `session`.
 class InMemoryOAuthProvider {
   get redirectUrl() {
-    return REDIRECT_URI;
+    return session.redirectUri;
   }
 
   get clientMetadata() {
     return {
       client_name: 'Insider Edge',
-      redirect_uris: [REDIRECT_URI],
+      redirect_uris: [session.redirectUri],
       grant_types: ['authorization_code', 'refresh_token'],
       response_types: ['code'],
       token_endpoint_auth_method: 'none',
@@ -128,10 +126,15 @@ async function finishConnect() {
   session.portfolioCache = null;
 }
 
-export async function beginAuth(returnTo) {
+// redirectUri is derived per request from the caller's origin (public tunnel
+// host, Vite dev origin, or :3001 directly) so Robinhood sends the browser
+// back somewhere the user can actually reach. Safe to vary per connect: the
+// session reset clears clientInfo, so dynamic client registration re-runs.
+export async function beginAuth(returnTo, redirectUri) {
   await closeClient();
   session = blankSession();
   session.returnTo = returnTo || '/';
+  session.redirectUri = process.env.ROBINHOOD_REDIRECT_URI ?? redirectUri ?? FALLBACK_REDIRECT_URI;
   session.provider = new InMemoryOAuthProvider();
   try {
     await connectClient();
