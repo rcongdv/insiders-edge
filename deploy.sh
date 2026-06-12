@@ -1,1 +1,1 @@
-npm run build && launchctl kickstart -k gui/$(id -u)/com.insideredge
+npm install && npm run build && launchctl kickstart -k gui/$(id -u)/com.insideredge
