@@ -1035,6 +1035,113 @@ a.brand:hover .brand-mark {
   border-bottom: 1px solid var(--green-deep);
 }
 
+/* ── robinhood sync ── */
+.rh-panel {
+  margin-top: 48px;
+  max-width: 720px;
+}
+
+.rh-sync-btn {
+  margin-top: 16px;
+  font: 600 13px var(--font-mono);
+  letter-spacing: 0.08em;
+  padding: 12px 22px;
+  border: 1px solid var(--green-deep);
+  color: var(--green);
+  background: rgba(65, 229, 141, 0.06);
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.rh-sync-btn:hover:not(:disabled) {
+  background: rgba(65, 229, 141, 0.16);
+  box-shadow: 0 0 18px rgba(65, 229, 141, 0.25);
+  transform: translateY(-1px);
+}
+
+.rh-sync-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.rh-pos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.rh-pos-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: left;
+  padding: 12px 14px;
+  border: 1px solid var(--panel-border);
+  background: rgba(16, 24, 18, 0.6);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.rh-pos-card:hover {
+  border-color: var(--green-deep);
+  box-shadow: 0 0 18px rgba(65, 229, 141, 0.18);
+  transform: translateY(-1px);
+}
+
+.rh-pos-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.rh-pos-symbol {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  color: var(--green);
+}
+
+.rh-pos-value {
+  font-size: 13px;
+}
+
+.rh-pos-meta {
+  font-size: 11px;
+  color: var(--ink-dim);
+}
+
+.rh-pnl {
+  font-size: 11.5px;
+  color: var(--ink-dim);
+}
+
+.rh-pnl.up {
+  color: var(--green);
+}
+
+.rh-pnl.down {
+  color: var(--red);
+}
+
+.rh-watch-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rh-link {
+  font: inherit;
+  color: var(--cyan);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline dotted;
+}
+
 /* ── skeletons ── */
 .skeleton {
   background: linear-gradient(

@@ -13,6 +13,7 @@ import InsiderPanel from './components/InsiderPanel.jsx';
 import AlgoPanel from './components/AlgoPanel.jsx';
 import InstitutionalPanel from './components/InstitutionalPanel.jsx';
 import OptionsPanel from './components/OptionsPanel.jsx';
+import RobinhoodPanel from './components/RobinhoodPanel.jsx';
 
 const SUGGESTIONS = ['NVDA', 'AAPL', 'TSLA', 'PLTR', 'JPM'];
 
@@ -88,6 +89,7 @@ export default function App() {
             smart money is leaning.
           </p>
           {chips}
+          <RobinhoodPanel navigate={navigate} />
         </section>
       ) : notFound ? (
         <section className="hero">
