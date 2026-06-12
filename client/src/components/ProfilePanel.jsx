@@ -66,8 +66,8 @@ export default function ProfilePanel({ profile, loading, error }) {
               </>
             ) : (
               <p className="empty-note">
-                Business description unavailable — extended fundamentals are blocked upstream;
-                showing tape-derived stats only.
+                No business description found for this company — showing market- and
+                filing-derived stats.
               </p>
             )}
           </div>

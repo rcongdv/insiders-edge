@@ -138,7 +138,8 @@ export default function App() {
       )}
 
       <footer className="colophon">
-        Data: SEC EDGAR (Form 4, 13F-HR) &amp; Yahoo Finance (daily OHLCV, fundamentals, options).
+        Data: SEC EDGAR (Form 4, 13F-HR, fundamentals), Yahoo Finance (daily OHLCV), CBOE
+        (delayed options), Wikipedia (company descriptions).
         Algorithmic-behavior signals are heuristics computed from the daily tape, not tick data.
         Research &amp; education only — not investment advice.
       </footer>

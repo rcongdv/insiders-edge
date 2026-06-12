@@ -6,7 +6,8 @@ import { allTickers, resolveTicker } from './edgar.js';
 import { insiderTransactions } from './form4.js';
 import { institutionalHolders } from './thirteenF.js';
 import { dailyPrices } from './prices.js';
-import { companyProfile, optionsChain } from './yahoo.js';
+import { companyProfile } from './profile.js';
+import { optionsChain } from './cboe.js';
 
 const app = express();
 const PORT = 3001;
@@ -63,8 +64,8 @@ app.get(
   '/api/profile/:ticker',
   wrap(async (req) => {
     const company = await requireCompany(req);
-    // SEC name/cik always resolve; Yahoo summary/stats degrade gracefully.
-    return { ...company, ...(await companyProfile(company.ticker)) };
+    // SEC name/cik always resolve; the composite profile degrades gracefully.
+    return { ...company, ...(await companyProfile(company)) };
   }),
 );
 
